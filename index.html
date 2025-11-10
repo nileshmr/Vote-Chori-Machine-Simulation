@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voting System Demo</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-top: 50px;
+    background: #f7f7f7;
+  }
+
+  h2 {
+    color: #333;
+  }
+
+  /* EVM style panel */
+  .evm {
+    width: 420px;
+    margin: 18px auto;
+    padding: 10px 12px;
+    border: 6px solid #222;
+    border-radius: 8px;
+    background: linear-gradient(180deg,#fff 0%, #fafafa 100%);
+    box-shadow: 0 8px 30px rgba(22,40,75,0.06);
+  }
+
+  .evm-header {
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+    color: #111;
+    margin-bottom: 8px;
+    padding-left: 6px;
+  }
+
+  .evm-body { display:flex; flex-direction:column; gap:8px; }
+
+  .party {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 6px;
+    background: transparent;
+  }
+
+  .party-left { display:flex; align-items:center; gap:8px; min-width:160px; }
+  .party-center { width:40px; display:flex; justify-content:center; }
+  .party-right { width:110px; display:flex; justify-content:center; }
+
+  .party-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #222;
+    min-width: 120px; /* keeps names aligned */
+    text-align: right;
+  }
+
+  /* small circular icon badge shown before party name */
+  .party-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    font-size: 14px;
+    color: #fff;
+    background: #999;
+  }
+  /* party-specific badge colors */
+  .party.bjp .party-icon { background: #fb923c; }
+  .party.rjd .party-icon { background: #b91c1c; }
+  .party.congress .party-icon { background: #16a34a; }
+
+  /* Party-specific name colors */
+  .party.bjp .party-name { color: #fb923c; } /* orange */
+  .party.rjd .party-name { color: #b91c1c; } /* red */
+  .party.congress .party-name { color: #16a34a; } /* green */
+
+  /* Result counts colored per party */
+  #bjpVotes { color: #fb923c; font-weight:700; }
+  #rjdVotesDisplay { color: #b91c1c; font-weight:700; }
+  #congressVotesDisplay { color: #16a34a; font-weight:700; }
+
+  .led {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: gray;
+    box-shadow: 0 0 10px gray;
+    transition: 0.3s;
+  }
+
+  .blink {
+    background-color: red;
+    box-shadow: 0 0 20px red;
+    animation: blink 0.6s linear 2;
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0.2;
+    }
+  }
+
+  button {
+    padding: 10px 18px;
+    font-size: 15px;
+    border: none;
+    background: linear-gradient(180deg,#2563eb 0%, #1e40af 100%);
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    width:100%;
+  }
+
+  button:hover {
+    background: #1e40af;
+  }
+
+  #result {
+    margin-top: 30px;
+    font-size: 20px;
+    color: green;
+  }
+</style>
+</head>
+<body>
+
+<h2>Voting Chor Machine Simulation 😅</h2>
+<h3>Developed By:- Guddu BABU Ramnagar 🕵️‍♂️</h3>
+
+<div class="evm">
+  <div class="evm-header">EVM Panel</div>
+  <div class="evm-body">
+
+    <div class="party bjp">
+      <div class="party-left">
+        <span class="party-icon">🪷</span>
+        <span class="party-name">BJP</span>
+      </div>
+      <div class="party-center"><div class="led" id="led1"></div></div>
+      <div class="party-right"><button onclick="vote('BJP', 'led1')">Button</button></div>
+    </div>
+
+    <div class="party rjd">
+      <div class="party-left">
+        <span class="party-icon">🏮</span>
+        <span class="party-name">RJD</span>
+      </div>
+      <div class="party-center"><div class="led" id="led2"></div></div>
+      <div class="party-right"><button onclick="vote('RJD', 'led2')">Button</button></div>
+    </div>
+
+    <div class="party congress">
+      <div class="party-left">
+        <span class="party-icon">✋</span>
+        <span class="party-name">Congress</span>
+      </div>
+      <div class="party-center"><div class="led" id="led3"></div></div>
+      <div class="party-right"><button onclick="vote('Congress', 'led3')">Button</button></div>
+    </div>
+
+  </div>
+</div>
+
+<div style="max-width:420px;margin:12px auto;">
+  <label for="toggleCounts" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;">
+    <input id="toggleCounts" type="checkbox">
+    <span>Show counts</span>
+  </label>
+
+  <div id="countsPanel" style="display:none;margin-top:8px;">
+    🗳️ BJP Votes: <span id="bjpVotes">0</span>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    RJD Votes: <span id="rjdVotesDisplay">0</span>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    Congress Votes: <span id="congressVotesDisplay">0</span>
+  </div>
+</div>
+
+<script>
+  // Counters for each party (BJP is the authoritative count)
+  let bjpVotes = 0;
+  let rjdVotes = 0;
+  let congressVotes = 0;
+
+  function vote(party, ledId) {
+    // Blink LED of the pressed button
+    const led = document.getElementById(ledId);
+    led.classList.add('blink');
+    setTimeout(() => led.classList.remove('blink'), 1000);
+
+    // Play beep sound using Web Audio API
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 1000; // 1000 Hz frequency
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+
+    // BJP always gets a vote when any button is pressed
+    bjpVotes++;
+    document.getElementById('bjpVotes').textContent = bjpVotes;
+
+    // Additionally increment the specific party's visible count for RJD and Congress
+    if (party === 'RJD') {
+      rjdVotes++;
+      document.getElementById('rjdVotesDisplay').textContent = rjdVotes;
+    } else if (party === 'Congress') {
+      congressVotes++;
+      document.getElementById('congressVotesDisplay').textContent = congressVotes;
+    }
+
+    // If party is BJP, only BJP increments (already handled above)
+    console.log(`Button for ${party} pressed — BJP++ (now ${bjpVotes}).`);
+  }
+
+  // Toggle counts panel visibility when checkbox changes
+  document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('toggleCounts');
+    const panel = document.getElementById('countsPanel');
+    if (!toggle || !panel) return;
+    toggle.addEventListener('change', function (e) {
+      panel.style.display = e.target.checked ? 'block' : 'none';
+    });
+  });
+</script>
+
+</body>
+</html>
